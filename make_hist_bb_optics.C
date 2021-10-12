@@ -109,7 +109,7 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   TString outputhist;
   
   if (nrun==100){
-    inputroot=Form("../sim/nofield/replayed_elastic_11.root");//shms_replay_matrixopt_%s_%d.root",OpticsID.Data(),FileID);
+    inputroot=Form("../sim/replayed_simdigtest_2_20211004.root");//shms_replay_matrixopt_%s_%d.root",OpticsID.Data(),FileID);
   }
   
   outputhist=Form("hist/Optics_%s_%d_hist.root",OpticsID.Data(),FileID);
@@ -231,20 +231,16 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   double vx, vy, vz, px, py, pz;
   double p, xptar, yptar, ytar, xtar;
   double p_fit, xptar_fit, yptar_fit, ytar_fit; //Fit is reconstructed using fit coefficients, no smearing for detector resolution
-  double p_recon, xptar_recon, yptar_recon, ytar_recon; //recon is reconstructed using fit coefficients, fp quantities smeared by det. resolution
-  double pthetabend_true;
-  double pthetabend_fit, pthetabend_recon;
-  double pinv_fit, pinv_recon;
-  double vz_fit, vz_recon;
-  double thetabend_true;
+  double pthetabend_fit;
+  //double pinv_fit;
+  double vz_fit;
   double thetabend_fit;
-  double thetabend_recon;
-  double xtar_recon, xtar_fit;
+  double xtar_fit;
   double xsieve, ysieve;
   double z0 = 1.472;//distance to face of sieve,[m]?, 1.172m is for BB at 1.55m, BB at 1.85m = 1.472m
   TVector3 spec_xaxis_fp,spec_yaxis_fp, spec_zaxis_fp;
   TVector3 spec_xaxis_tgt,spec_yaxis_tgt, spec_zaxis_tgt;
-  double tracker_pitch_angle = 10.0*3.14/180.0;//put this into the input file
+  double tracker_pitch_angle = 10.22*3.14/180.0;//put this into the input file
 
   TVector3 BB_zaxis( sin(CentAngle), 0.0, cos(CentAngle) ); //BB is on beam right, global x axis points to beam left
   TVector3 BB_xaxis(0,-1,0); //X axis of transport coordinates is vertically down:
@@ -265,15 +261,11 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   HList.Add(hytar);
   TH1F *hztar = new TH1F("hztar",Form("Run %d ; Ztar; Counts",nrun),500,-0.3,0.3);
   HList.Add(hztar);
-  TH1F *hztarW = new TH1F("hztarW",Form("Run %d (physics weighted [s^{-1}]; Ztar; Counts",nrun),500,-0.3,0.3);
-  HList.Add(hztarW);
-  TH1F *hztarTrue = new TH1F("hztarTrue",Form("Run %d ; Ztar (true); Counts",nrun),1000,-0.3,0.3);
-  HList.Add(hztarTrue);
-  TH2F *hXptarDelta = new TH2F("hXptarDelta",Form("Run %d ; Xptar ; Pinv x #theta_{bend}",nrun),120,-.6,.6,100,0,0.25);
+  TH2F *hXptarDelta = new TH2F("hXptarDelta",Form("Run %d ; Xptar ; P x #theta_{bend}",nrun),120,-.6,.6,100,0,1);
   HList.Add(hXptarDelta);
-  TH2F *hYptarDelta = new TH2F("hYptarDelta",Form("Run %d ; Yptar ; Pinv x #theta_{bend}",nrun),120,-.4,.4,100,0,0.25);
+  TH2F *hYptarDelta = new TH2F("hYptarDelta",Form("Run %d ; Yptar ; P x #theta_{bend}",nrun),120,-.4,.4,100,0,1);
   HList.Add(hYptarDelta);
-  TH2F *hYtarDelta = new TH2F("hYtarDelta",Form("Run %d ; Ytar ; Pinv x #theta_{bend}",nrun),100,-0.3,0.3,100,0,1);
+  TH2F *hYtarDelta = new TH2F("hYtarDelta",Form("Run %d ; Ytar ; P x #theta_{bend}",nrun),100,-0.3,0.3,100,0,1);
   HList.Add(hYtarDelta);
   //
   TH2F *hYpFpYFp_all = new TH2F("hYpFpYFp_all",Form("Run %d ; Ypfp ; Yfp",nrun),100,-.3,.3,100,-0.3,0.3);
@@ -284,22 +276,22 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   HList.Add(hXpFpXFp);
   TH2F *hYtarYptar = new TH2F("hYtarYptar",Form("Run %d ; Yptar ; Ytar",nrun),100,-.3,.3,100,-0.15,0.15);
   HList.Add(hYtarYptar);
-  TH2F *hZtarDelta = new TH2F("hZtarDelta",Form("Run %d ; Ztar ; Pinv x #theta_{bend}",nrun),100,-0.3,0.3,100,0,0.35);
+  TH2F *hZtarDelta = new TH2F("hZtarDelta",Form("Run %d ; Ztar ; P x #theta_{bend}",nrun),100,-0.3,0.3,100,0,1);
   HList.Add(hZtarDelta);
 
-  TH1F *h_p = new TH1F("h_p",Form("Run %d ; P, recon",nrun),100,0,5);
+  TH1F *h_p = new TH1F("h_p",Form("Run %d ; P, recon",nrun),100,0,10);
   HList.Add(h_p);//p
-  TH1F *h_pinvtheta = new TH1F("h_pinvtheta",Form("Run %d ; Pinv x #theta_{bend}",nrun),100,0,0.5);
+  TH1F *h_pinvtheta = new TH1F("h_pinvtheta",Form("Run %d ; P x #theta_{bend}",nrun),100,0,1);
   HList.Add(h_pinvtheta);//ptheta
-  TH2F *hPinvthetaVx = new TH2F("hPinvthetaVx",Form("Run %d ; Pinv x #theta_{bend}; xfp",nrun),100,0,0.25,100,-0.7,0.7);
+  TH2F *hPinvthetaVx = new TH2F("hPinvthetaVx",Form("Run %d ; P x #theta_{bend}; xfp",nrun),100,0,1,100,-0.7,0.7);
   HList.Add(hPinvthetaVx);//ptheta vs x
-  TH2F *hPinvthetaVxtar = new TH2F("hPinvthetaVxtar",Form("Run %d ; Pinv x #theta_{bend}; xTar",nrun),100,0,0.2,100,-0.05,0.05);
+  TH2F *hPinvthetaVxtar = new TH2F("hPinvthetaVxtar",Form("Run %d ; P x #theta_{bend}; xTar",nrun),100,0,1,100,-0.05,0.05);
   HList.Add(hPinvthetaVxtar);//ptheta vs x
-   TH1F *h_ptheta = new TH1F("h_ptheta",Form("Run %d ; P x #theta_{bend}",nrun),100,0,4);
+   TH1F *h_ptheta = new TH1F("h_ptheta",Form("Run %d ; P x #theta_{bend}",nrun),100,0,1);
   HList.Add(h_ptheta);//ptheta
-  TH2F *hPthetaVx = new TH2F("hPthetaVx",Form("Run %d ; P x #theta_{bend}; xfp",nrun),100,0,4,100,-0.7,0.7);
+  TH2F *hPthetaVx = new TH2F("hPthetaVx",Form("Run %d ; P x #theta_{bend}; xfp",nrun),100,0,1,100,-0.7,0.7);
   HList.Add(hPthetaVx);//ptheta vs x
-  TH2F *hPthetaVxtar = new TH2F("hPthetaVxtar",Form("Run %d ; P x #theta_{bend}; xTar",nrun),100,0,4,100,-0.05,0.05);
+  TH2F *hPthetaVxtar = new TH2F("hPthetaVxtar",Form("Run %d ; P x #theta_{bend}; xTar",nrun),100,0,1,100,-0.05,0.05);
   HList.Add(hPthetaVxtar);//ptheta vs x
   TH2F *hthetaVp = new TH2F("hthetaVp",Form("Run %d ; #theta_{bend}; P [GeV/c]",nrun),100,0,1,100,0,10);
   HList.Add(hthetaVp);
@@ -308,28 +300,21 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   TH2F *h_xsVysW = new TH2F("h_xsVysW",Form("Run %d (physics weighted [s^{-1}]) ; y_{sieve}; x_{sieve}",nrun),100,-0.2,0.2,100,-0.4,0.4);
   HList.Add(h_xsVysW);
   
-  TH1F *h_zmsc = new TH1F("h_zmsc",Form("Run %d ; z_{fit} - z_{true}",nrun),100,-0.001,0.001);
-  HList.Add(h_zmsc);
-  TH2F *h_zmscVz = new TH2F("h_zmscVz",Form("Run %d ; z_{fit}; z_{fit} - z_{true}",nrun),100,-0.3,0.3,100,-0.001,0.001);
-  HList.Add(h_zmscVz);
    TH2F *hYpFpYFp_cut0 = new TH2F("hYpFpYFp_cut0",Form("Run %d, yS=2 ; Ypfp ; Yfp",nrun),100,-.3,.3,100,-0.3,0.3);
   HList.Add(hYpFpYFp_cut0);
   TH2F *hXpFpXFp_cut0 = new TH2F("hXpFpXFp_cut0",Form("Run %d, xS=2 ; Xpfp ; Xfp",nrun),100,-.7,.7,100,-0.7,0.7);
   HList.Add(hXpFpXFp_cut0);
-  TH2F *h_zp = new TH2F("h_zp",Form("Run %d;zTar;P, recon",nrun),100,-0.3,0.3,100,0,5);
+  TH2F *h_zp = new TH2F("h_zp",Form("Run %d;zTar;P, recon",nrun),100,-0.3,0.3,100,0,10);
   HList.Add(h_zp);
   TH1F *h_esumNorm = new TH1F("h_esumNorm",Form("Run %d;Esum/P",nrun),100,-2,2);
   HList.Add(h_esumNorm);
-  TH1F *h_pz_1 = new TH1F("h_pz_1",Form("Run %d, 0.75 GeV/c;zTar-zTarTrue",nrun),100,-0.05,0.05);
-  HList.Add(h_pz_1);
-  TH1F *h_pz_2 = new TH1F("h_pz_2",Form("Run %d, 1.5 GeV/c;zTar-zTarTrue",nrun),100,-0.05,0.05);
-  HList.Add(h_pz_2);
-  TH1F *h_pdiff = new TH1F("h_pdiff",Form("Run %d;pCalc-pTrue [GeV/c]",nrun),100,-2,2);
-  HList.Add(h_pdiff);
-  TH2F *h_pdiff2d = new TH2F("h_pdiff2d",Form("Run %d; pTrue [GeV/c];pCalc-pTrue [GeV/c]",nrun),100,0,6,100,-2,2);
-  HList.Add(h_pdiff2d);
-  TH1F *h_pTrue = new TH1F("h_pTrue",Form("Run %d ; P, true",nrun),100,0,5);
-  HList.Add(h_pTrue);//p
+  TH1F *h_pthetabend = new TH1F("h_pthetabend",Form("Run %d;p*thetabend",nrun),100,0,1);
+  HList.Add(h_pthetabend);
+  TH1F *h_xptar = new TH1F("h_xptar",Form("Run %d;xptar",nrun),100,-0.5,0.5);
+  HList.Add(h_xptar);
+  TH1F *h_yptar = new TH1F("h_yptar",Form("Run %d;yptar",nrun),100,-0.2,0.2);
+  HList.Add(h_yptar);
+
   //
   vector <TH2F*> hYsDelta;
   hYsDelta.resize(NumFoil);
@@ -391,7 +376,7 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   
 
   //reading the model file and storing the data in a matrix, M
-  string  modelfilename = "c1.txt";
+  string  modelfilename = "optics_SBS1_710A.txt";
   //string  modelfilename = "newfit.dat";
   ifstream modelfile(modelfilename.c_str());
   TString currentline;
@@ -433,7 +418,6 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
     if (goodtrack){
       //reconstruct the target quantities
 	xtar_fit = -vy;
-	xtar_recon = -vy;
 	
 	for( int iter=0; iter<3; iter++ ){
 
@@ -441,20 +425,18 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
 	  yptar_fit = 0.0;
 	  ytar_fit = 0.0;
 	  pthetabend_fit = 0.0;
-	  pinv_fit = 0.0;
 	
 	  for (int row=0; row<row_M; row++){
-	    xptar_fit += M(row,0)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_recon,M(row,8));
-	    yptar_fit += M(row,1)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_recon,M(row,8));
-	    ytar_fit += M(row,2)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_recon,M(row,8));
-	    pinv_fit += M(row,3)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_recon,M(row,8));
-	    pthetabend_fit += M(row,3)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_recon,M(row,8));
+	    xptar_fit += M(row,0)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_fit,M(row,8));
+	    yptar_fit += M(row,1)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_fit,M(row,8));
+	    ytar_fit += M(row,2)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_fit,M(row,8));
+	    //pinv_fit += M(row,3)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_fit,M(row,8));
+	    pthetabend_fit += M(row,3)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_fit,M(row,8));
 	    	
 	  }
 
 	  //BB, beam left:
-	  vz_fit = -ytar_fit / (sin(CentAngle) + cos(CentAngle)*yptar_fit);
-	   
+	  vz_fit = -ytar_fit / (sin(CentAngle) + cos(CentAngle)*yptar_fit);	   
 	  xtar_fit   = -vy - vz_fit * cos(CentAngle) * xptar_fit;
 	}
 
@@ -473,79 +455,61 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
 	  phat_fp_recon.Y() * spec_yaxis_fp +
 	  phat_fp_recon.Z() * spec_zaxis_fp;
 
-	thetabend_recon = acos( phat_fp_recon_global.Dot( phat_tgt_recon_global ) );
+	double thetabend_recon = acos( phat_fp_recon_global.Dot( phat_tgt_recon_global ) );
 
 	int pexpansion_flag = 0;
+	double p_recon;
 	if( pexpansion_flag == 0 ){
-	  p_recon = pthetabend_fit/thetabend_fit;
+	  p_recon = pthetabend_fit/thetabend_recon;
 	} else {
 	  p_recon = 1.0/pthetabend_fit;
 	}
-	pinv_recon = 1.0/p_recon;
+	double pinv_recon = 1.0/p_recon;
 	
 	xsieve = xtar_fit + xptar_fit*z0;
 	ysieve = ytar_fit + yptar_fit*z0;
 
 
 	//h_esumNorm->Fill((esumps+esumsh)/p_recon);
-	
+	h_xptar->Fill(xptar_fit);
+	h_yptar->Fill(yptar_fit);
+
 	hytar->Fill(ytar_fit);
 	hztar->Fill(vz_fit);
-	//hztarW->Fill(vz_recon,weight);
-	//hztarTrue->Fill(zval);
-	hXptarDelta->Fill(xptar_fit,pinv_fit*thetabend_fit);
-	hYptarDelta->Fill(yptar_fit,pinv_fit*thetabend_fit);
-	hYtarDelta->Fill(ytar_fit,pinv_fit*thetabend_fit);
+	hXptarDelta->Fill(xptar_fit,pthetabend_fit);
+	hYptarDelta->Fill(yptar_fit,pthetabend_fit);
+	hYtarDelta->Fill(ytar_fit,pthetabend_fit);
 	hYtarYptar->Fill(yptar_fit,ytar_fit);
 	hYpFpYFp_all->Fill(ypfp[itrack],yfp[itrack]);
 	hXpFpXFp->Fill(xpfp[itrack],xfp[itrack]);
 	hYFpXFp->Fill(yfp[itrack],xfp[itrack]); 
 	hYtarYptar->Fill(yptar_fit,ytar_fit);
-	hZtarDelta->Fill(vz_fit,pinv_fit*thetabend_fit);
+	hZtarDelta->Fill(vz_fit,pthetabend_fit);
 	h_zp->Fill(vz_fit,p_recon);
-
-	//	h_pdiff->Fill(p_recon-pval);
-	//h_pdiff2d->Fill(pval,p_recon-pval);
-	//h_pTrue->Fill(pval);
-
-	//if(abs(p_recon-0.75)<0.2){
-	//  h_pz_1->Fill(vz_recon-zval);
-	//}
-	
-	//if (abs(p_recon-1.5)<0.2){
-	//  h_pz_2->Fill(vz_recon-zval);
-	//}
-	
-	//if (abs(xsieve+0.2017)<0.03){
-	//  hXpFpXFp_cut0->Fill(xpfp_fit[itrack],xfp_fit[itrack]);
-	//}
-	
-
+	h_pthetabend->Fill(pthetabend_fit);
+	  
 	h_p->Fill(p_recon);
-	h_pinvtheta->Fill(pinv_fit*thetabend_fit);
-	hPinvthetaVx->Fill(pinv_fit*thetabend_fit,xfp[itrack]);
-	hPinvthetaVxtar->Fill(pinv_fit*thetabend_fit,xtar_fit);
+	h_pinvtheta->Fill(pthetabend_fit);
+	hPinvthetaVx->Fill(pthetabend_fit,xfp[itrack]);
+	hPinvthetaVxtar->Fill(pthetabend_fit,xtar_fit);
 	
-	h_ptheta->Fill(p_recon*thetabend_fit);
-	hPthetaVx->Fill(p_recon*thetabend_fit,xfp[itrack]);
-	hPthetaVxtar->Fill(p_recon*thetabend_recon,xtar_fit);
-	hthetaVp->Fill(thetabend_fit,p_recon);
+	h_ptheta->Fill(pthetabend_fit);
+	hPthetaVx->Fill(pthetabend_fit,xfp[itrack]);
+	hPthetaVxtar->Fill(pthetabend_fit,xtar_fit);
+	hthetaVp->Fill(thetabend_recon,p_recon);
 	h_xsVys->Fill(ysieve,xsieve);
-	//h_xsVysW->Fill(ysieve,xsieve,weight);
-	//h_zmsc->Fill(vz_recon-zval);
-	//h_zmscVz->Fill(vz_recon,vz_recon-zval);
 
 	for  (UInt_t nc=0;nc<ytar_delta_cut.size();nc++) {
-	  if (ytar_delta_cut[nc]->IsInside(ytar_fit,pinv_fit*thetabend_fit))	{ 
-	    hYsDelta[nc]->Fill(ysieve,pinv_fit*thetabend_fit);
-	    hXsDelta[nc]->Fill(xsieve,pinv_fit*thetabend_fit);
+	  if (ytar_delta_cut[nc]->IsInside(ytar_fit,pinv_recon*thetabend_fit))	{ 
+	    hYsDelta[nc]->Fill(ysieve,pinv_recon*thetabend_fit);
+	    hXsDelta[nc]->Fill(xsieve,pinv_recon*thetabend_fit);
 	    hYpFpYFp[nc]->Fill(ypfp[itrack],yfp[itrack]);
 	    if (nc==0 && abs(ysieve-(2.*0.0381-0.0381*3))<0.03){
 	      hYpFpYFp_cut0->Fill(ypfp[itrack],yfp[itrack]);
 	    }
 	    
 	    for  (Int_t nd=0;nd<ndelcut;nd++) {
-	      if ( pinv_fit*thetabend_fit >=delcut[nd]-delwidth[nd] && pinv_fit*thetabend_fit <delcut[nd]+delwidth[nd]) {
+	      if ( pinv_recon*thetabend_fit >=delcut[nd]-delwidth[nd] && pinv_recon*thetabend_fit <delcut[nd]+delwidth[nd]) {
 		hYsXs_DelCut[nc][nd]->Fill(ysieve,xsieve); 
 		hYpFpYFp_DelCut[nc][nd]->Fill(ypfp[itrack],yfp[itrack]);
 		hXpFpXFp_DelCut[nc][nd]->Fill(xpfp[itrack],xfp[itrack]);
