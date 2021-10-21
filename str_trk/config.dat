@@ -1,0 +1,12 @@
+gmn_replayed_11150_11153.root
+endlist
+prefix bb.gem
+GEMX0 -0.1614
+GEMY0 0.0
+GEMZ0 2.9621
+GEMtheta 10.22
+GEMphi 180.0
+ZSIEVE 1.4636
+endconfig
+bb.gem.track.ntrack==1&&bb.gem.track.nhits>=3&&bb.gem.track.chi2ndf<30&&bb.ps.e<1.2&&bb.ps.e>0.15
+endcut
