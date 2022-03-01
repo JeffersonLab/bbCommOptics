@@ -1,0 +1,26 @@
+Rootfiles/gmn_replayed_13196_stream0_seg0_0.root
+Rootfiles/gmn_replayed_13196_stream0_seg1_1.root
+Rootfiles/gmn_replayed_13196_stream0_seg2_2.root
+Rootfiles/gmn_replayed_13196_stream0_seg3_3.root
+Rootfiles/gmn_replayed_13196_stream0_seg4_4.root
+Rootfiles/gmn_replayed_13196_stream0_seg5_5.root
+Rootfiles/gmn_replayed_13196_stream0_seg6_6.root
+Rootfiles/gmn_replayed_13196_stream0_seg7_7.root
+Rootfiles/gmn_replayed_13196_stream0_seg8_8.root
+Rootfiles/gmn_replayed_13196_stream0_seg9_9.root
+Rootfiles/gmn_replayed_13196_stream0_seg10_10.root
+Rootfiles/gmn_replayed_13196_stream0_seg11_11.root
+Rootfiles/gmn_replayed_13196_stream0_seg12_12.root
+Rootfiles/gmn_replayed_13196_stream0_seg13_13.root
+Rootfiles/gmn_replayed_13196_stream0_seg14_14.root
+endlist
+prefix bb.gem
+GEMX0 -0.2
+GEMY0 0.04
+GEM Z0 3.0
+GEMtheta 8.8
+GEMphi 180.0
+ZSIEVE 1.48
+endconfig
+bb.gem.track.ntrack==1&&bb.gem.track.nhits>=4&&bb.gem.track.chi2ndf<20&&bb.ps.e>=0.2&&abs(bb.tr.x+1.9*bb.tr.th-bb.sh.x)<0.06&&abs(bb.tr.y+bb.tr.ph*1.9-bb.sh.y)<0.06&&bb.ps.e+bb.sh.e>0.7
+endcut

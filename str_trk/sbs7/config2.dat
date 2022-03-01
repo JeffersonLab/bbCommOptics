@@ -1,0 +1,14 @@
+Rootfiles/gmn_replayed_11965_stream0_seg0_0.root
+Rootfiles/gmn_replayed_11965_stream0_seg1_1.root
+Rootfiles/gmn_replayed_11965_stream0_seg2_2.root
+endlist
+prefix bb.gem
+GEMX0 -0.212184
+GEMY0 0.0322128
+GEM Z0 3.00532
+GEMtheta 8.81
+GEMphi 180.45
+ZSIEVE 1.47786
+endconfig
+bb.gem.track.ntrack==1&&bb.gem.track.nhits>=3&&bb.gem.track.chi2ndf<30&&bb.ps.e>0.1&&abs(bb.tr.x+1.9*bb.tr.th-bb.sh.x)<0.07&&abs(bb.tr.y+bb.tr.ph*1.9-bb.sh.y)<0.07&&(bb.ps.e+bb.sh.e)>0.2
+endcut

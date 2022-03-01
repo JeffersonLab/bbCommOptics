@@ -374,12 +374,12 @@ void AlignZeroField( const char *configfilename ){
 	hname_cut= Form("sievecut_%d_%d",nys,nxs);
 	t=(TCutG*)gROOT->FindObject(hname_cut);
 	if(t) {
-	  t->Draw("same");
+	  // t->Draw("same");
 	  t->SetLineColor(1);
 	  Double_t xcut,ycut;
 	  t->GetPoint(0,xcut,ycut);
 	  TText* ystext = new TText(xcut,ycut,Form("(%d,%d)",nys,nxs));
-	  ystext->Draw();
+	  //ystext->Draw();
 	  histView_Cut->Update();
 	}
       }
@@ -537,12 +537,12 @@ void AlignZeroField( const char *configfilename ){
   FitZeroField->mnexcm("MIGRAD",arglist,2,ierflg);
   
   //TODO: grab parameters, write them out to file. Profit.
-  double GEMX0_fit=-0.212184;
-  double GEMY0_fit=0.0322128;
-  double GEMZ0_fit=3.00532;
-  double ZSIEVE_fit=1.47786;
-  double GEMtheta_fit=0.153710;
-  double GEMphi_fit=3.14944;
+  double GEMX0_fit=-0.205104;//-0.213869;//-0.206968;//-0.198518;//-0.211922;//-0.212184;
+  double GEMY0_fit=0.0423978;//0.0394128;//0.0412156;//0.0425868;//0.0406949;//0.0322128;
+  double GEMZ0_fit=2.70631;//3.12109;//3.0399;//2.71764;//3.01701;//3.00532;
+  double ZSIEVE_fit=1.18981;//1.59027;//1.50922;//1.22518;//1.49244;//1.47786;
+  double GEMtheta_fit=0.152622;//0.154066;//0.151425;//0.149694;//0.154208;//0.153710;
+  double GEMphi_fit=3.12074;//3.13248;//3.15825;//3.11352;//3.13954;//3.14944;
 
   //check the results:
   TVector3 GEMzaxisFit( sin(GEMtheta_fit)*cos(GEMphi_fit), sin(GEMtheta_fit)*sin(GEMphi_fit), cos(GEMtheta_fit) );
