@@ -58,7 +58,7 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   if (file_optics.is_open()) {
     //
     cout << " Open file = " << OpticsFile << endl;
-    while (RunNum!=nrun  ) {
+    //while (RunNum!=nrun  ) {
       temp.ReadToDelim(file_optics,',');
       cout << temp << endl;
       if (temp.Atoi() == nrun) {
@@ -66,7 +66,7 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
       } else {
 	temp.ReadLine(file_optics);
       }
-    }
+      //}
     if (RunNum==nrun) {
       temp.ReadToDelim(file_optics,',');
       OpticsID = temp;
@@ -108,10 +108,17 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   TString inputroot;
   TString outputhist;
   
-  if (nrun==100){
-    inputroot=Form("../sim/replayed_simdigtest_2_20211004.root");//shms_replay_matrixopt_%s_%d.root",OpticsID.Data(),FileID);
-  }
-  
+  // if (nrun==11107){
+    //inputroot=Form("../sim/replayed_simdigtest_2_20211004.root");//shms_replay_matrixopt_%s_%d.root",OpticsID.Data(),FileID);
+    //inputroot=Form("Rootfiles/gmn_replayed_11107_merged.root");//stream0_seg0_0.root");  
+    //inputroot=Form("Rootfiles/gmn_replayed_11107_11109.root");
+    //}
+  //else if (nrun==11175){inputroot=Form("Rootfiles/gmn_replayed_11175_11178.root");}
+  //else{
+  //inputroot=Form("Rootfiles/combined_13674_5foil.root");//}
+  inputroot=Form("Rootfiles/combined_13675_4foil_new.root");//}
+  //inputroot=Form("files/replay_sbs8_13437_13440.root");//}
+  //inputroot=Form("files/gmn_replayed_11966_11985.root");//}
   outputhist=Form("hist/Optics_%s_%d_hist.root",OpticsID.Data(),FileID);
   cout << " input root = " << inputroot << endl;
   TObjArray HList(0);
@@ -183,7 +190,7 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
     xpfp_xfp_fcut->cd();
     for  (Int_t nf=0;nf<NumFoil;nf++) {
       for  (Int_t nd=0;nd<ndelcut;nd++) {
-        for (Int_t nc=0;nc<17;nc++) {
+        for (Int_t nc=0;nc<13;nc++) {
 	  TCutG* tempg  = (TCutG*)gROOT->FindObject(Form("hXpFpXFp_cut_yscol_%d_nfoil_%d_ndel_%d",nc,nf,nd));
 	  if (tempg)  {
 	    //cout << "hXpFpXFp_cut = " << nc << " " << nf << " " << nd << endl;
@@ -201,13 +208,17 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   int NMAX = 100000; 
 
   double yfp[NMAX];
-  tsimc->SetBranchAddress("bb.tr.y",yfp);
+  tsimc->SetBranchAddress("bb.tr.r_y",yfp);
+  //tsimc->SetBranchAddress("bb.gem.track.y",yfp);
   double ypfp[NMAX];
-  tsimc->SetBranchAddress("bb.tr.ph",ypfp);
+  tsimc->SetBranchAddress("bb.tr.r_ph",ypfp);
+  //tsimc->SetBranchAddress("bb.gem.track.ph",ypfp);
   double xfp[NMAX];
-  tsimc->SetBranchAddress("bb.tr.x",xfp);
+  tsimc->SetBranchAddress("bb.tr.r_x",xfp);
+  //tsimc->SetBranchAddress("bb.gem.track.x",xfp);
   double xpfp[NMAX];
-  tsimc->SetBranchAddress("bb.tr.th",xpfp);
+  tsimc->SetBranchAddress("bb.tr.r_th",xpfp);
+  //tsimc->SetBranchAddress("bb.gem.track.th",xpfp);
   double ytar_og[NMAX];
   tsimc->SetBranchAddress("bb.tr.tg_y",ytar_og);
   double yptar_og[NMAX];
@@ -222,10 +233,12 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   tsimc->SetBranchAddress("bb.gem.track.nhits",nhits);
   double chisq[NMAX];
   tsimc->SetBranchAddress("bb.gem.track.chi2ndf",chisq);
-  //double esumps = 0;
-  //tsimc->SetBranchAddress("bb.ps.e",&esumps);
-  //double esumsh = 0;
-  //tsimc->SetBranchAddress("bb.sh.e",&esumsh);
+  double esumps = 0;
+  tsimc->SetBranchAddress("bb.ps.e_c",&esumps);
+  double esumsh = 0;
+  tsimc->SetBranchAddress("bb.sh.e_c",&esumsh);
+  double epratio = 0;
+  tsimc->SetBranchAddress("bb.etot_over_p",&epratio);
 
   //define the variables
   double vx, vy, vz, px, py, pz;
@@ -237,10 +250,10 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   double thetabend_fit;
   double xtar_fit;
   double xsieve, ysieve;
-  double z0 = 1.472;//distance to face of sieve,[m]?, 1.172m is for BB at 1.55m, BB at 1.85m = 1.472m
+  double z0 = 1.18981;//1.59027;//1.50922;//1.49244;//1.42641;//1.1957;//distance to face of sieve,[m]?, 1.172m is for BB at 1.55m, BB at 1.85m = 1.472m
   TVector3 spec_xaxis_fp,spec_yaxis_fp, spec_zaxis_fp;
   TVector3 spec_xaxis_tgt,spec_yaxis_tgt, spec_zaxis_tgt;
-  double tracker_pitch_angle = 10.22*3.14/180.0;//put this into the input file
+  double tracker_pitch_angle = 0.152622;//0.154066;//0.1514246;//0.15421;//0.15321;//0.152139;//10.22*3.14/180.0;//put this into the input file
 
   TVector3 BB_zaxis( sin(CentAngle), 0.0, cos(CentAngle) ); //BB is on beam right, global x axis points to beam left
   TVector3 BB_xaxis(0,-1,0); //X axis of transport coordinates is vertically down:
@@ -343,23 +356,23 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
     hYpFpYFp_DelCut[nf].resize(ndelcut);
     hXpFpXFp_DelCut[nf].resize(ndelcut);
     for  (Int_t nd=0;nd<ndelcut;nd++) {
-      hYsXs_DelCut_YpYfpCut[nf][nd].resize(17);
-      hYsXs_DelCut_XpXfpCut[nf][nd].resize(17);
-      hXs_DelCut_YpYfpCut[nf][nd].resize(17);
+      hYsXs_DelCut_YpYfpCut[nf][nd].resize(13);
+      hYsXs_DelCut_XpXfpCut[nf][nd].resize(13);
+      hXs_DelCut_YpYfpCut[nf][nd].resize(13);
     }
   }
   cout << " finish setup Cut 2d" << endl;
   for  (Int_t nc=0;nc<NumFoil;nc++) {
-    hYsDelta[nc] = new TH2F(Form("hYsDelta_Foil_%d",nc),Form("Run %d Foil %d; Ys ; Pinv x #theta_{bend}",nc,nrun),100,-0.2,0.2,50,0.,0.25);
+    hYsDelta[nc] = new TH2F(Form("hYsDelta_Foil_%d",nc),Form("Run %d Foil %d; Ys ; P x #theta_{bend}",nc,nrun),100,-0.2,0.2,50,0.,1);
     HList.Add(hYsDelta[nc]);
-    hXsDelta[nc] = new TH2F(Form("hXsDelta_Foil_%d",nc),Form("Run %d Foil %d; Xs ; Pinv x #theta_{bend}",nc,nrun),100,-0.4,0.4,50,0,0.25);
+    hXsDelta[nc] = new TH2F(Form("hXsDelta_Foil_%d",nc),Form("Run %d Foil %d; Xs ; P x #theta_{bend}",nc,nrun),100,-0.4,0.4,50,0,1);
     HList.Add(hXsDelta[nc]);
     hYpFpYFp[nc] = new TH2F(Form("hYpFpYFp_%d",nc),Form("Run %d Foil %d; Ypfp ; Yfp",nrun,nc),100,-.3,.3,100,-.3,.3);
     HList.Add(hYpFpYFp[nc]);
     for  (Int_t nd=0;nd<ndelcut;nd++) {
       hYsXs_DelCut[nc][nd]  = new TH2F(Form("hYsXs_Foil_%d_DelCut_%d",nc,nd),Form("Run %d Foil %d Cut %3.1f; Ys ; Xs",nrun,nc,delcut[nd]),50,-0.2,0.2,100,-0.4,0.4);
       HList.Add(hYsXs_DelCut[nc][nd]);
-      for  (Int_t ny=0;ny<17;ny++) {
+      for  (Int_t ny=0;ny<13;ny++) {
 	hYsXs_DelCut_YpYfpCut[nc][nd][ny]  = new TH2F(Form("hYsXs_Foil_%d_DelCut_%d_FpCut_%d",nc,nd,ny),Form("Run %d Foil %d Cut %3.1f Ys=%d; Ys ; Xs",nrun,nc,delcut[nd],ny),100,-0.2,0.2,100,-0.4,0.4);
 	HList.Add(hYsXs_DelCut_YpYfpCut[nc][nd][ny]);
 	hYsXs_DelCut_XpXfpCut[nc][nd][ny]  = new TH2F(Form("hYsXs_Foil_%d_DelCut_%d_XFpCut_%d",nc,nd,ny),Form("Run %d Foil %d Cut %3.1f Xs=%d; Ys ; Xs",nrun,nc,delcut[nd],ny),100,-0.2,0.2,100,-0.4,0.4);
@@ -376,8 +389,8 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   
 
   //reading the model file and storing the data in a matrix, M
-  string  modelfilename = "optics_SBS1_710A.txt";
-  //string  modelfilename = "newfit.dat";
+  //string  modelfilename = "optics_sbs9.txt";
+  string  modelfilename = "newfit_sbs9.dat";
   ifstream modelfile(modelfilename.c_str());
   TString currentline;
   //while( currentline.ReadLine(inputfile) ){}
@@ -396,17 +409,18 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   // loop over entries
   Long64_t nentries = tsimc->GetEntries();
   cout << " start loop " << nentries << endl;
-  for (int i = 0; i < nentries; i++) {
-  //for (int i = 0; i < 50000; i++) {
+    for (int i = 0; i < nentries; i++) {
+      //  for (int i = 0; i < 1000000; i++) {
     tsimc->GetEntry(i);
-    if (i%500==0)cout << " Entry = " << i << endl;
+    if (i%100000==0)cout << " Entry = " << i << endl;
 
     //determine if good track
     bool goodtrack = false;
     int itrack = 0;
   
     for (int ii=0; ii<ntracks; ii++){
-      if (nhits[ii]>=4 && xfp[ii]<0.55 && xfp[ii]>-0.55 && chisq[ii]<4.0 ){
+      //if (nhits[ii]>=4 && xfp[ii]<0.55 && xfp[ii]>-0.55 && chisq[ii]<20.0 && esumps>0.2 && epratio>0.5){
+      if (nhits[ii]>=4 && xfp[ii]<0.55 && xfp[ii]>-0.55 && chisq[ii]<30.0 && esumps>0.2 && epratio>0.7&&esumps+esumsh>0.3){
 	goodtrack=true;
 	itrack = ii;
       }
@@ -500,7 +514,7 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
 	h_xsVys->Fill(ysieve,xsieve);
 
 	for  (UInt_t nc=0;nc<ytar_delta_cut.size();nc++) {
-	  if (ytar_delta_cut[nc]->IsInside(ytar_fit,pinv_recon*thetabend_fit))	{ 
+	  if (ytar_delta_cut[nc]->IsInside(ytar_fit,pthetabend_fit))	{ 
 	    hYsDelta[nc]->Fill(ysieve,pinv_recon*thetabend_fit);
 	    hXsDelta[nc]->Fill(xsieve,pinv_recon*thetabend_fit);
 	    hYpFpYFp[nc]->Fill(ypfp[itrack],yfp[itrack]);
@@ -509,7 +523,7 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
 	    }
 	    
 	    for  (Int_t nd=0;nd<ndelcut;nd++) {
-	      if ( pinv_recon*thetabend_fit >=delcut[nd]-delwidth[nd] && pinv_recon*thetabend_fit <delcut[nd]+delwidth[nd]) {
+	      if ( pthetabend_fit >=delcut[nd]-delwidth[nd] && pthetabend_fit <delcut[nd]+delwidth[nd]) {
 		hYsXs_DelCut[nc][nd]->Fill(ysieve,xsieve); 
 		hYpFpYFp_DelCut[nc][nd]->Fill(ypfp[itrack],yfp[itrack]);
 		hXpFpXFp_DelCut[nc][nd]->Fill(xpfp[itrack],xfp[itrack]);
@@ -539,3 +553,4 @@ void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFp
   HList.Write();
   //
 }
+

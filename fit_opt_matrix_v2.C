@@ -23,11 +23,12 @@
 
 void fit_opt_matrix_v2() {
 
-  Int_t nSettings = 1;
+  Int_t nSettings = 2;
   Int_t FileID=-1;
 
   vector<int> runTot;
-  runTot.push_back(100);
+  runTot.push_back(13675);
+  runTot.push_back(13674);
 
   gROOT->Reset();
   gStyle->SetOptStat(0);
@@ -37,15 +38,15 @@ void fit_opt_matrix_v2() {
   gStyle->SetTitleSize(0.05,"XY");
   gStyle->SetPadLeftMargin(0.17);
   //
-  string newcoeffsfilename="newfit.dat";
-  string oldcoeffsfilename="c1.txt";
-  int nfit=0,npar,nfit_max=6607,npar_final=0,max_order=6,norder;
+  string newcoeffsfilename="newfit_sbs9.dat";
+  string oldcoeffsfilename="optics_sbs9_mod.txt";
+  int nfit=0,npar,nfit_max=6000,npar_final=0,max_order=2,norder;
   Int_t MaxPerBin=200;
   Int_t MaxZtarPerBin=10000;
   //
-  TH1F *hytar = new TH1F("hytar","ytar (cm)",70,-0.3,0.3);
-  TH1F *hytarrecon = new TH1F("hytarrecon","ytar recon(cm)",70,-0.3,0.3);
-  TH1F *hytarnew = new TH1F("hytarnew","ytar new(cm)",70,-0.3,0.3);
+  TH1F *hytar = new TH1F("hytar","ytar (cm)",100,-0.12,0.12);
+  TH1F *hytarrecon = new TH1F("hytarrecon","ytar recon(cm)",100,-0.12,0.12);
+  TH1F *hytarnew = new TH1F("hytarnew","ytar new(cm)",100,-0.12,0.12);
   TH1F *hytardiff = new TH1F("hytardiff","ytar diff(cm)",70,-0.1,0.1);
   TH1F *hytarnewdiff = new TH1F("hytarnewdiff","ytar new diff(cm)",70,-0.1,0.1);
   TH1F *hxptar = new TH1F("hxptar","xptar ",100,-.3,.3);
@@ -62,17 +63,20 @@ void fit_opt_matrix_v2() {
   //
   ifstream oldcoeffsfile(oldcoeffsfilename.c_str());
   ofstream newcoeffsfile(newcoeffsfilename.c_str());
-  /*
-  int row_M = 0, col_M = 9;
-  oldcoeffsfile >> row_M;
+
+  int row_M = 20, col_M = 9;
+  //oldcoeffsfile >> row_M;
   TMatrixD M(row_M,col_M);
-  
+
   for(int row=0; row<row_M; row++){
     for(int col=0; col<col_M; col++){ 
       oldcoeffsfile >> M(row,col);
+      cout<<M(row,col)<<" ";
     }
+    cout<<endl;
+
   }
-  */
+  
   
   vector<double> xptarcoeffs_old;
   vector<double> yptarcoeffs_old;
@@ -126,31 +130,22 @@ void fit_opt_matrix_v2() {
   xtarexpon_fit.push_back(0);
   num_recon_terms_fit = 1;
 
-  
-  //
-  while( currentline.ReadLine(oldcoeffsfile,kFALSE) && !currentline.BeginsWith(" ----") ){
-    cout<<"line: "<<currentline<<endl;
-    TString sc1(currentline(1,14));
-    TString sc2(currentline(15,15));
-    TString sc3(currentline(30,15));
-    TString sc4(currentline(45,16));
-    
-    xptarcoeffs_old.push_back(sc1.Atof());
-    ytarcoeffs_old.push_back(sc3.Atof());
-    yptarcoeffs_old.push_back(sc2.Atof());
-    deltacoeffs_old.push_back(sc4.Atof());
+
+  for(int row=0; row<row_M; row++){
+
+    xptarcoeffs_old.push_back(M(row,0));
+    ytarcoeffs_old.push_back(M(row,1));
+    yptarcoeffs_old.push_back(M(row,2));
+    deltacoeffs_old.push_back(M(row,3));
 
     //cout<<" "<<xptarcoeffs_old[num_recon_terms_old]<<" "<<ytarcoeffs_old[num_recon_terms_old]<<" "<<yptarcoeffs_old[num_recon_terms_old]<<" "<< deltacoeffs_old[num_recon_terms_old]<<" "<<endl;
     
     int expontemp[5];
 
     for(int expon=0; expon<5; expon++){
-      TString stemp(currentline(62+expon*2,2));
-      expontemp[expon] = stemp.Atoi();
-      //cout<<"     "<<expontemp[expon];
+      expontemp[expon] = M(row,4+expon);
     }
-    //cout<<endl;
-    
+
     xfpexpon_old.push_back(expontemp[0]);
     xpfpexpon_old.push_back(expontemp[2]);
     yfpexpon_old.push_back(expontemp[1]);
@@ -158,35 +153,38 @@ void fit_opt_matrix_v2() {
     xtarexpon_old.push_back(expontemp[4]);
 
     num_recon_terms_old++;
-    
+
     norder= expontemp[0]+expontemp[1]+expontemp[2]+expontemp[3]+expontemp[4];
     if (expontemp[4]==0) {
-    xptarcoeffs_fit.push_back(sc1.Atof());
-    ytarcoeffs_fit.push_back(sc3.Atof());
-    yptarcoeffs_fit.push_back(sc2.Atof());
-    deltacoeffs_fit.push_back(sc4.Atof());
-    xfpexpon_fit.push_back(expontemp[0]);
-    xpfpexpon_fit.push_back(expontemp[2]);
-    yfpexpon_fit.push_back(expontemp[1]);
-    ypfpexpon_fit.push_back(expontemp[3]);
-    xtarexpon_fit.push_back(expontemp[4]);
-     cout << num_recon_terms_fit << " " <<  xptarcoeffs_fit[num_recon_terms_fit] << " " << ytarcoeffs_fit[num_recon_terms_fit] << " " <<  yptarcoeffs_fit[num_recon_terms_fit] << " " << deltacoeffs_fit[num_recon_terms_fit] << " " << xfpexpon_fit[num_recon_terms_fit] << " " << xpfpexpon_fit[num_recon_terms_fit] << " " << yfpexpon_fit[num_recon_terms_fit] << " " << ypfpexpon_fit[num_recon_terms_fit] << " " << xtarexpon_fit[num_recon_terms_fit] << " " << endl;
-    num_recon_terms_fit++;
-    } else {
-    xptarcoeffs_xtar.push_back(sc1.Atof());
-    ytarcoeffs_xtar.push_back(sc3.Atof());
-    yptarcoeffs_xtar.push_back(sc2.Atof());
-    deltacoeffs_xtar.push_back(sc4.Atof());
-    xfpexpon_xtar.push_back(expontemp[0]);
-    xpfpexpon_xtar.push_back(expontemp[2]);
-    yfpexpon_xtar.push_back(expontemp[1]);
-    ypfpexpon_xtar.push_back(expontemp[3]);
-    xtarexpon_xtar.push_back(expontemp[4]);
-    num_recon_terms_xtar++;
-   
+      xptarcoeffs_fit.push_back(M(row,0));
+      ytarcoeffs_fit.push_back(M(row,1));
+      yptarcoeffs_fit.push_back(M(row,2));
+      deltacoeffs_fit.push_back(M(row,3));
+      xfpexpon_fit.push_back(expontemp[0]);
+      xpfpexpon_fit.push_back(expontemp[2]);
+      yfpexpon_fit.push_back(expontemp[1]);
+      ypfpexpon_fit.push_back(expontemp[3]);
+      xtarexpon_fit.push_back(expontemp[4]);
+      cout << num_recon_terms_fit << " " <<  xptarcoeffs_fit[num_recon_terms_fit] << " " << ytarcoeffs_fit[num_recon_terms_fit] << " " <<  yptarcoeffs_fit[num_recon_terms_fit] << " " << deltacoeffs_fit[num_recon_terms_fit] << " " << xfpexpon_fit[num_recon_terms_fit] << " " << xpfpexpon_fit[num_recon_terms_fit] << " " << yfpexpon_fit[num_recon_terms_fit] << " " << ypfpexpon_fit[num_recon_terms_fit] << " " << xtarexpon_fit[num_recon_terms_fit] << " " << endl;
+      num_recon_terms_fit++;
     }
+    else{
+      xptarcoeffs_xtar.push_back(M(row,0));
+      ytarcoeffs_xtar.push_back(M(row,1));
+      yptarcoeffs_xtar.push_back(M(row,2));
+      deltacoeffs_xtar.push_back(M(row,3));
+      xfpexpon_xtar.push_back(expontemp[0]);
+      xpfpexpon_xtar.push_back(expontemp[2]);
+      yfpexpon_xtar.push_back(expontemp[1]);
+      ypfpexpon_xtar.push_back(expontemp[3]);
+      xtarexpon_xtar.push_back(expontemp[4]);
+      num_recon_terms_xtar++;
+    
+    }
+    
   }
-
+  
+ 
   cout << "num recon terms in OLD matrix = " << num_recon_terms_old << endl;
   cout << "num recon terms in fit matrix = " << num_recon_terms_fit << endl;
   cout << "num recon terms in xtar matrix = " << num_recon_terms_xtar << endl;
@@ -221,18 +219,28 @@ void fit_opt_matrix_v2() {
     Int_t ndelcut=-1;
     vector<Double_t > delcut;
     vector<Double_t > delwidth;
+    
     if (file_optics.is_open()) {
       //
       cout << " Open file = " << OpticsFile << endl;
+      
       while (RunNum!=nrun  ) {
 	temp.ReadToDelim(file_optics,',');
-	cout << temp << endl;
+	//cout << "temp: "<<temp << endl;
 	if (temp.Atoi() == nrun) {
-	RunNum = temp.Atoi();
+	  RunNum = temp.Atoi();
+	  //cout<<"found it: "<<RunNum<<endl;
 	} else {
-	  temp.ReadLine(file_optics);
+	  for (int ii=0;ii<4;ii++){
+	    temp.ReadLine(file_optics);
+	    //cout<<"tempAtoi: "<<temp.Atoi()<<endl;	  
+	  }
+	  temp.ReadToDelim(file_optics,',');
+	  RunNum = temp.Atoi();
+	  //cout<<"2nd run: "<<RunNum<<endl;
 	}
       }
+          
       if (RunNum==nrun) {
 	temp.ReadToDelim(file_optics,',');
 	OpticsID = temp;
@@ -262,11 +270,13 @@ void fit_opt_matrix_v2() {
 	}
 	temp.ReadToDelim(file_optics);
 	delwidth.push_back(temp.Atof());
-      }
-    } else {
-      cout << " No file = " << OpticsFile << endl;    
+	}
+      } else {
+      cout << " No file = " << OpticsFile << endl;   
     }
+    
     cout << RunNum << " " << OpticsID << " " << CentAngle << " " << nfoils << " " << SieveFlag << endl;
+    
     
     TString inputroot;
     inputroot = Form("hist/Optics_%s_%d_fit_tree.root",OpticsID.Data(),FileID);
@@ -274,8 +284,9 @@ void fit_opt_matrix_v2() {
     TFile *fsimc = new TFile(inputroot);
     TTree *FitTree = (TTree*)fsimc->Get("TFit");
     //Declaration of leaves types
+    int NMAX = 100000; 
     Double_t  ys,xtar,xptar,yptar,ytar,delta,xptarT,yptarT,ytarT,ztarT;
-    Double_t ysieveT,ysieve, pinvtheta,ztar;
+    Double_t ysieveT,ysieve, pinvtheta,ztar, pthetabend;
     FitTree->SetBranchAddress("ys",&ysieve);
     FitTree->SetBranchAddress("ysT",&ysieveT);
     FitTree->SetBranchAddress("xtar",&xtar);
@@ -287,26 +298,28 @@ void fit_opt_matrix_v2() {
     FitTree->SetBranchAddress("yptarT",&yptarT);
     FitTree->SetBranchAddress("ytarT",&ytarT);
     FitTree->SetBranchAddress("ztarT",&ztarT);
-    vector<double> *xpfp = 0;
+    double xpfp;
     FitTree->SetBranchAddress("xpfp",&xpfp);
-    vector<double> *ypfp = 0;
+    double ypfp;
     FitTree->SetBranchAddress("ypfp",&ypfp);
-    vector<double> *xfp = 0;
+    double xfp;
     FitTree->SetBranchAddress("xfp",&xfp);
-    vector<double> *yfp = 0;
+    double yfp;
     FitTree->SetBranchAddress("yfp",&yfp);
-    FitTree->SetBranchAddress("pinvtheta",&pinvtheta);
+    FitTree->SetBranchAddress("pthetabend",&pthetabend);
     
     vector<Int_t > Ztar_Cnts;
     vector<vector<vector<Int_t> > > Ztar_Ys_Delta_Cnts;
     Ztar_Cnts.resize(nfoils);
+    //cout<<"resized by nfoils: "<<nfoils<<endl;
     Ztar_Ys_Delta_Cnts.resize(nfoils);
     const Int_t nysieve=7;
     vector <Double_t> ys_cent;
     for (Int_t nys=0;nys<7;nys++) {
-    Double_t pos=nys*0.0381-0.0381*3;
-    ys_cent.push_back(pos);
+      Double_t pos=nys*0.0381-0.0381*3;
+      ys_cent.push_back(pos);
     }
+    
     for (Int_t nf=0;nf<nfoils;nf++) {
       Ztar_Ys_Delta_Cnts[nf].resize(ndelcut);
       for (Int_t nd=0;nd<ndelcut;nd++) {
@@ -321,27 +334,31 @@ void fit_opt_matrix_v2() {
 	}}}
     
     //
-  Long64_t nentries = FitTree->GetEntries();
-  for (int i = 0; i < nentries; i++) {
+    double p_fit, xptar_fit, yptar_fit, ytar_fit, xtar_fit; //Fit is reconstructed using fit coefficients, no smearing for detector resolution
+    double pthetabend_fit;
+    double p_xtar, xptar_xtar, yptar_xtar, ytar_xtar; 
+    double pthetabend_xtar;
+    Long64_t nentries = FitTree->GetEntries();
+    for (int i = 0; i < nentries; i++) {
     FitTree->GetEntry(i);
     //
-    //cout<<"fp quantities: "<< xfp->at(0)<<" "<< yfp->at(0)<<" "<<endl;
-    Double_t ytartemp = 0.0,yptartemp=0.0,xptartemp=0.0,deltatemp=0.0;
-    Double_t etemp;
-    for( int icoeffold=0; icoeffold<num_recon_terms_old; icoeffold++ ){
-      etemp= 
-	pow( xfp->at(0), xfpexpon_old[icoeffold] ) * 
-	pow( yfp->at(0), yfpexpon_old[icoeffold] ) * 
-	pow( xpfp->at(0), xpfpexpon_old[icoeffold] ) * 
-	pow( ypfp->at(0), ypfpexpon_old[icoeffold] ) * 
-	pow( xtar, xtarexpon_old[icoeffold] );
-      deltatemp += deltacoeffs_old[icoeffold] * etemp;
-      ytartemp += ytarcoeffs_old[icoeffold] * etemp;
-      yptartemp += yptarcoeffs_old[icoeffold] * etemp;
-      xptartemp += xptarcoeffs_old[icoeffold] *etemp;
-    } // for icoeffold loop
-    
+    xtar_fit=0;
+    for( int iter=0; iter<3; iter++ ){
+      xptar_fit = 0.0;
+      yptar_fit = 0.0;
+      ytar_fit = 0.0;
+      pthetabend_fit = 0.0;
+      for (int row=0; row<row_M; row++){
+	xptar_fit += M(row,0)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	yptar_fit += M(row,1)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	ytar_fit += M(row,2)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	//pinv_fit += M(row,3)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	pthetabend_fit += M(row,3)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	
+      }
+    }
     //
+    
     Int_t found_nf=-1;
     Int_t found_nd=-1;
     Int_t found_ny=-1;
@@ -350,7 +367,7 @@ void fit_opt_matrix_v2() {
       if (abs(ztarT-ztar_foil[nf])<0.02) found_nf=nf;
     }
     for (Int_t nd=0;nd<ndelcut;nd++) {
-      if (pinvtheta >=delcut[nd]-delwidth[nd] && pinvtheta <delcut[nd]+delwidth[nd]) found_nd=nd;
+      if (pthetabend >=delcut[nd]-delwidth[nd] && pthetabend <delcut[nd]+delwidth[nd]) found_nd=nd;
     }
     for (Int_t ny=0;ny<nysieve;ny++) {	
       if (abs(ysieveT-ys_cent[ny])<.02) found_ny=ny;
@@ -360,27 +377,31 @@ void fit_opt_matrix_v2() {
     }
     if (good_bin && nfit < nfit_max && Ztar_Ys_Delta_Cnts[found_nf][found_nd][found_ny]< MaxPerBin && Ztar_Cnts[found_nf]< MaxZtarPerBin) {
       //
-      hytarrecon->Fill(ytartemp);
-      hyptarrecon->Fill(yptartemp);
-      hxptarrecon->Fill(xptartemp);
-      Double_t ytar_xtar = 0.0,yptar_xtar=0.0,xptar_xtar=0.0;
-      for( int icoeff_xtar=0; icoeff_xtar<num_recon_terms_xtar; icoeff_xtar++ ){
-	etemp= 
-	  pow( xfp->at(0), xfpexpon_xtar[icoeff_xtar] ) * 
-	  pow( yfp->at(0), yfpexpon_xtar[icoeff_xtar] ) * 
-	  pow( xpfp->at(0), xpfpexpon_xtar[icoeff_xtar] ) * 
-	  pow( ypfp->at(0), ypfpexpon_xtar[icoeff_xtar] ) * 
-	  pow( xtar, xtarexpon_xtar[icoeff_xtar] );
-	ytar_xtar += ytarcoeffs_xtar[icoeff_xtar] * etemp;
-	yptar_xtar += yptarcoeffs_xtar[icoeff_xtar] * etemp;
-	xptar_xtar += xptarcoeffs_xtar[icoeff_xtar] *etemp; 
+      hytarrecon->Fill(ytar_fit);
+      hyptarrecon->Fill(yptar_fit);
+      hxptarrecon->Fill(xptar_fit);
+
+      for( int iter=0; iter<3; iter++ ){
+	xptar_fit = 0.0;
+	yptar_fit = 0.0;
+	ytar_fit = 0.0;
+	pthetabend_fit = 0.0;
+	for (int row=14; row<row_M; row++){
+	  xptar_xtar += M(row,0)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	  yptar_xtar += M(row,1)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	  ytar_xtar += M(row,2)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	  //pinv_fit += M(row,3)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	  pthetabend_xtar += M(row,3)*pow(xfp,M(row,4))*pow(yfp,M(row,5))*pow(xpfp,M(row,6))*pow(ypfp,M(row,7))*pow(xtar_fit,M(row,8));
+	  
+	}
       }
+      double etemp;
       for( int icoeff_fit=0; icoeff_fit<num_recon_terms_fit; icoeff_fit++ ){
 	etemp= 
-	  pow( xfp->at(0), xfpexpon_fit[icoeff_fit] ) * 
-	  pow( yfp->at(0), yfpexpon_fit[icoeff_fit] ) * 
-	  pow( xpfp->at(0), xpfpexpon_fit[icoeff_fit] ) * 
-	  pow( ypfp->at(0), ypfpexpon_fit[icoeff_fit] ) * 
+	  pow( xfp, xfpexpon_fit[icoeff_fit] ) * 
+	  pow( yfp, yfpexpon_fit[icoeff_fit] ) * 
+	  pow( xpfp, xpfpexpon_fit[icoeff_fit] ) * 
+	  pow( ypfp, ypfpexpon_fit[icoeff_fit] ) * 
 	  pow( xtar, xtarexpon_fit[icoeff_fit] );
 	if (nfit < nfit_max ) {
 	  lambda[icoeff_fit][nfit] = etemp;
@@ -390,7 +411,7 @@ void fit_opt_matrix_v2() {
 	}
       } // for icoeff_fit loop
 
-      hytarcalcdiff->Fill(ytartemp - ytar);
+      hytarcalcdiff->Fill(ytar_fit - ytar);
       
       hytar->Fill(ytar);
       hyptar->Fill(yptar);
@@ -401,10 +422,10 @@ void fit_opt_matrix_v2() {
       Ztar_Cnts[found_nf]++;
       Ztar_Ys_Delta_Cnts[found_nf][found_nd][found_ny]++;
       nfit++;
-      xfptrue.push_back( xfp->at(0) );
-      yfptrue.push_back( yfp->at(0) );
-      xpfptrue.push_back( xpfp->at(0) );
-      ypfptrue.push_back( ypfp->at(0) );
+      xfptrue.push_back( xfp );
+      yfptrue.push_back( yfp );
+      xpfptrue.push_back( xpfp );
+      ypfptrue.push_back( ypfp );
       xtartrue.push_back( xtar );
       xptartrue.push_back( xptarT );
       ytartrue.push_back( ytarT  );
@@ -430,8 +451,9 @@ void fit_opt_matrix_v2() {
   //end each run loop
   ////////////////////
   }
+  
    //
-  if (nfit < nfit_max) {
+    if (nfit < nfit_max) {
     cout << " nfit < nfit_max, set nfit_max = " << nfit << endl;
     return;
   }
@@ -600,7 +622,7 @@ void fit_opt_matrix_v2() {
   cytar->Divide(2,2);
   cytar->cd(1);
   hytar->Draw();
-cytar->cd(2);
+  cytar->cd(2);
   hytarrecon->Draw();
   cytar->cd(3);
   hytarnew->Draw();

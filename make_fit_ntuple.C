@@ -136,8 +136,10 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
   //
   TString inputroot;
   TString outputroot;
-  inputroot=Form("../sim/replayed_simdigtest_2_20211004.root");//shms_replay_matrixopt_%s_%d.root",OpticsID.Data(),FileID);
-
+  if (nrun==13674){  
+inputroot=Form("Rootfiles/combined_13674_5foil_new.root");//shms_replay_matrixopt_%s_%d.root",OpticsID.Data(),FileID);
+  }
+  else{inputroot=Form("files/replay_sbs8_13436.root");}
   outputroot= Form("hist/Optics_%s_%d_fit_tree.root",OpticsID.Data(),FileID);
   //
   //
@@ -246,13 +248,13 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
   int NMAX = 100000; 
 
   double yfp[NMAX];
-  tsimc->SetBranchAddress("bb.tr.y",yfp);
+  tsimc->SetBranchAddress("bb.tr.r_y",yfp);
   double ypfp[NMAX];
-  tsimc->SetBranchAddress("bb.tr.ph",ypfp);
+  tsimc->SetBranchAddress("bb.tr.r_ph",ypfp);
   double xfp[NMAX];
-  tsimc->SetBranchAddress("bb.tr.x",xfp);
+  tsimc->SetBranchAddress("bb.tr.r_x",xfp);
   double xpfp[NMAX];
-  tsimc->SetBranchAddress("bb.tr.th",xpfp);
+  tsimc->SetBranchAddress("bb.tr.r_th",xpfp);
  double ytar_og[NMAX];
   tsimc->SetBranchAddress("bb.tr.tg_y",ytar_og);
   double yptar_og[NMAX];
@@ -267,10 +269,12 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
   tsimc->SetBranchAddress("bb.gem.track.nhits",nhits);
   double chisq[NMAX];
   tsimc->SetBranchAddress("bb.gem.track.chi2ndf",chisq);
-  //double esumps = 0;
-  //tsimc->SetBranchAddress("bb.ps.e",&esumps);
-  //double esumsh = 0;
-  //tsimc->SetBranchAddress("bb.sh.e",&esumsh);
+  double esumps = 0;
+  tsimc->SetBranchAddress("bb.ps.e_c",&esumps);
+  double esumsh = 0;
+  tsimc->SetBranchAddress("bb.sh.e_c",&esumsh);
+  double epratio = 0;
+  tsimc->SetBranchAddress("bb.etot_over_p", &epratio);
   
   //define the variables
   double vx, vy, vz, px, py, pz;
@@ -286,10 +290,10 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
   double thetabend_recon;
   double xtar_recon, xtar_fit;
   double xsieve, ysieve;
-  double z0 = 1.472;//distance to face of sieve,[m]?
+  double z0 = 1.18981;//1.59027;//1.50922;//1.49244;//1.42641;//1.1957;//distance to face of sieve,[m]?
   TVector3 spec_xaxis_fp,spec_yaxis_fp, spec_zaxis_fp;
   TVector3 spec_xaxis_tgt,spec_yaxis_tgt, spec_zaxis_tgt;
-  double tracker_pitch_angle = 10.0*3.14/180.0;//put this into the input file
+  double tracker_pitch_angle = 0.152622;//0.154066;//0.1514246;//0.15421;//0.15321;//0.152139;//10.0*3.14/180.0;//put this into the input file
 
   Double_t xptarT,ytarT,yptarT,ysieveT,xsieveT,ztarT,ztar,pinvtheta,pmom,weight;
   //
@@ -300,21 +304,22 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
   otree->Branch("xs",&xsieve);
   otree->Branch("xsT",&xsieveT);
   otree->Branch("ztarT",&ztarT);
-  otree->Branch("xtar",&xtar_recon);
+  otree->Branch("xtar",&xtar_fit);
   otree->Branch("ztar",&ztar);
-  otree->Branch("xptar",&xptar_recon);
-  otree->Branch("yptar",&yptar_recon);
-  otree->Branch("ytar",&ytar_recon);
+  otree->Branch("xptar",&xptar_fit);
+  otree->Branch("yptar",&yptar_fit);
+  otree->Branch("ytar",&ytar_fit);
   otree->Branch("xptarT",&xptarT);
   otree->Branch("yptarT",&yptarT);
   otree->Branch("ytarT",&ytarT);
-  otree->Branch("xpfp",&xpfp);
-  otree->Branch("ypfp",&ypfp);
-  otree->Branch("xfp",&xfp);
-  otree->Branch("yfp",&yfp);
+  otree->Branch("xpfp",xpfp);
+  otree->Branch("ypfp",ypfp);
+  otree->Branch("xfp",xfp);
+  otree->Branch("yfp",yfp);
   otree->Branch("pinvtheta",&pinvtheta);
   otree->Branch("pmom",&pmom);
   otree->Branch("weight",&weight);
+  otree->Branch("pthetabend",&pthetabend_fit);
 
   CentAngle=CentAngle*3.14159/180.;
   TVector3 BB_zaxis( sin(CentAngle), 0.0, cos(CentAngle) ); //BB is on beam right, global x axis points to beam left
@@ -332,7 +337,7 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
 
 
   //reading the model file and storing the data in a matrix, M
-  string modelfilename = "c1.txt";
+  string modelfilename = "optics_sbs9.txt";
   //string  modelfilename = "newfit.dat";
   ifstream modelfile(modelfilename.c_str());
   TString currentline;
@@ -349,7 +354,7 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
   }
 
   // loop over entries
-  Double_t zdis_sieve = 1.472;//front of sieve
+  Double_t zdis_sieve = z0;//front of sieve
   Long64_t nentries = tsimc->GetEntries();
   cout << " start loop " << nentries << endl;
   for (int i = 0; i < nentries; i++) {
@@ -361,7 +366,7 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
     int itrack = 0;
   
     for (int ii=0; ii<ntracks; ii++){
-      if (nhits[ii]>=4 && xfp[ii]<0.55 && xfp[ii]>-0.55 && chisq[ii]<4.0 ){
+      if (nhits[ii]>=4 && xfp[ii]<0.55 && xfp[ii]>-0.55 && chisq[ii]<30.0 && esumps>0.2 &&epratio>0.7 && esumps+esumsh>0.3){
 	goodtrack=true;
 	itrack = ii;
       }
@@ -381,11 +386,6 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
 	  pthetabend_fit = 0.0;
 	  pinv_fit = 0.0;
 	
-	  xptar_recon = 0.0;
-	  yptar_recon = 0.0;
-	  ytar_recon = 0.0;
-	  pthetabend_recon = 0.0;
-	  pinv_recon = 0.0;
 	
 	  for (int row=0; row<row_M; row++){
 	    xptar_fit += M(row,0)*pow(xfp[itrack],M(row,4))*pow(yfp[itrack],M(row,5))*pow(xpfp[itrack],M(row,6))*pow(ypfp[itrack],M(row,7))*pow(xtar_recon,M(row,8));
@@ -437,10 +437,10 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
 
 	Int_t nf_found=-1, nd_found=-1,ny_found=-1,nx_found=-1;
 	for  (UInt_t nf=0;nf<ytar_delta_cut.size();nf++) {
-	  if (ytar_delta_cut[nf]->IsInside(ytar_fit,pinv_fit*thetabend_fit)) nf_found=nf;
+	  if (ytar_delta_cut[nf]->IsInside(ytar_fit,pthetabend_fit)) nf_found=nf;
 	} 
 	for  (UInt_t nd=0;nd<ndelcut;nd++) {
-	  if ( pinv_fit*thetabend_fit >=delcut[nd]-delwidth[nd] && pinv_fit*thetabend_fit <delcut[nd]+delwidth[nd])  nd_found=nd;
+	  if ( pthetabend_fit >=delcut[nd]-delwidth[nd] && pthetabend_fit <delcut[nd]+delwidth[nd])  nd_found=nd;
 	}
 	if (nf_found!=-1 && nd_found!=-1) {
 	  for  (UInt_t ny=0;ny<nysieve;ny++) {
@@ -474,7 +474,7 @@ void make_fit_ntuple(Int_t nrun=1814,Int_t FileID=-2){
 	  xsieveT=xs_cent[nx_found];
 	  ztarT=ztar_foil[nf_found];
 	  ztar=vz_fit;//(ytar-yMP-reactx*(cos(CentAngle)-yptar*sin(CentAngle)))/(-sin(CentAngle)-cos(CentAngle)*yptar)
-	  pinvtheta =pinv_fit*thetabend_fit;
+	  pinvtheta =pthetabend_fit;
 
 	  
 	  otree->Fill();
