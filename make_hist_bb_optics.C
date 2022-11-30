@@ -26,6 +26,8 @@
 #include<math.h>
 #include <iostream>
 #include <fstream>
+#include "TMatrixD.h"
+
 using namespace std;
 
 void make_hist_bb_optics(Int_t nrun=1813,Bool_t CutYtarFlag=kTRUE,Bool_t CutYpFpYFpFlag=kTRUE,Bool_t CutXpFpXFpFlag=kTRUE,Int_t FileID=-2){
